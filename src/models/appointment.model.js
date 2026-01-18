@@ -11,9 +11,10 @@ const appointmentSchema = new mongoose.Schema({
             ref: "Doctor",
             required: "true"
         },
-        date: {
-            type: String, // or Date
-            required: true
+            date:
+            {
+            type: Date,
+            default: Date.now
             },
         time:{
             type: String, // "10:30 AM"

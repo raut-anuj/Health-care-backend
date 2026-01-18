@@ -43,7 +43,8 @@ const patientSchema =new mongoose.Schema({
     contactNumber:{
         type:Number,
         //   required:true
-    }
+    },
+
 },
 {timestamps:true})
 
