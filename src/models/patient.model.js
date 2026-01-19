@@ -13,7 +13,7 @@ const patientSchema =new mongoose.Schema({
     },
     emailId:{
         type:String,
-        // require:true
+        require:true
     },
     diagonsedWith:{
         type:String,

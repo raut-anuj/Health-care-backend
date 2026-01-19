@@ -5,6 +5,10 @@ const hospitalSchmea =new mongoose.Schmea({
         type:String,
         required:true,
     },
+    emailId:{
+        type:String,
+        required:true
+    },
     addressLine1:{
         type:String,
         required:true

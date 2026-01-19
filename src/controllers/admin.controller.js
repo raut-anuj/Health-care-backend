@@ -273,7 +273,8 @@ const allPatientsList = asyncHandler(async(req,res)=>{
 })
 
 const alldocspec = asyncHandler(async(req,res)=>{
-    const admin = await findById(req.params.id)
+    const admin = await Admin.findById(req.params.id)
+
     if(!admin)
         throw new ApiError(400, "Invalid Id.")
     const special = await DoctorSpecialization.find()
@@ -286,11 +287,100 @@ const alldocspec = asyncHandler(async(req,res)=>{
     .json(new ApiResponse(200, special ,"Records."))
 })
 
+const deleteUser = asyncHandler(async(req,res)=>{
+    const { emailId } = req.body
+    if(!emailId || emailId.trim() == "")
+        throw new ApiError(400, "Field required.")
+    const patient = await Patient.findOneAndDelete({ emailId })
+    const doctor = await Doctor.findOneAndDelete({ emailId })
+    const staff = await Staff.findOneAndDelete({ emailId })
+    if (!patient && !doctor && !staff) {
+    throw new ApiError(404, "Invalid EmailId");}
+
+    return res.status(200)
+    .json(new ApiResponse(200, {}, "Record deleted."))
+})
+
+const Appointments = asyncHandler(async(req,res)=>{
+    const { emailId } = req.body
+    const { date } = req.body
+
+        if (!date) {
+  throw new ApiError(400, "Date field is required.");}
+
+    if(!emailId || emailId.trim()=="")  
+        throw new ApiError(404, "Field required.")
+
+   const doctor = await Doctor.findOne({ emailId })
+   if(!doctor)
+    throw new ApiError(404, "No doctor found.")
+
+   //optional
+//  const admin = await Admin.findById(req.params.id)
+//     if(!admin)
+//         throw new ApiError(400, "Invalid Id.")
+
+// Count appointments on the given date
+    const dayStart = new Date(date);
+    dayStart.setHours(0,0,0,0);
+
+    const dayEnd = new Date(date);
+    dayEnd.setHours(23,59,59,999);
+
+    const todayAppointments = await Appointment.countDocuments({
+        doctorId: doctor._id,
+        date:  { $gte: dayStart, $lte: dayEnd }
+    });
+        return res.status(200)
+        .json(new ApiResponse(200, todayAppointments))
+})
+
+const aboutPaitent = asyncHandler(async(req,res)=>{
+    const { emailId } = req.body
+    const admin = await Admin.findById(req.params.id)
+    if(!admin)
+        throw new ApiError(400, "Invalid Admin.")
+    const patient = await Patient.findOne({ emailId }).select("-password, -refreshToken")
+    if(!patient)
+        throw new ApiError(400, "Invalid Patient EmailId.")
+    return res.status(200)
+    .json(new ApiResponse(200, patient, "Patient Record."))
+})
+
+const aboutStaff = asyncHandler(async(req,res)=>{
+const { emailId } = req.body
+    const admin = await Admin.findById(req.params.id)
+    if(!admin)
+        throw new ApiError(400, "Invalid Admin.")
+    const staff = await Staff.findOne({ emailId }).select("-password, -refreshToken")
+    if(!staff)
+        throw new ApiError(400, "Invalid Staff EmailId.")
+    return res.status(200)
+    .json(new ApiResponse(200, staff, "Staff Record."))
+})
+
+const aboutDoctor = asyncHandler(async(req,res)=>{
+const { emailId } = req.body
+    const admin = await Admin.findById(req.params.id)
+    if(!admin)
+        throw new ApiError(400, "Invalid Admin.")
+    const doctor = await Doctor.findOne({ emailId }).select("-password, -refreshToken")
+    if(!doctor)
+        throw new ApiError(400, "Invalid Doctor EmailId.")
+    return res.status(200)
+    .json(new ApiResponse(200, doctor, "Doctor Record."))
+})
+
 export {
+    deleteUser,
+    aboutPaitent,
+    aboutStaff,
+    aboutDoctor,
+    Appointments,
     alldocspec,
     allDoctorsList,
     allStaffsList,
-    allStaffsList,
+    allPatientsList,
     logout,
     loginUser,
     registerUser,

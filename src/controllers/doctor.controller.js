@@ -205,13 +205,13 @@ const logout = asyncHandler(async(req,res)=>{
 })
 
 const gettAllpatient = asyncHandler(async(req,res)=>{
-    const { doctor_id } = await Doctor.findById(req.doctor._id)
+    const doctorid = await Doctor.findById(req.doctor.id)
 
-    if(!doctor_id)
-        throw new ApiError (400, "Invalid Id.")
+    if(!doctorid)
+        throw new ApiError (400, "Invalid Doctor Id.")
 
     const allPatient = await MedicalRecord.find({
-        doctor_id : doctor_id
+        doctor_id : doctorid._id
 
     })
     if( allPatient.length === 0 )
@@ -221,12 +221,10 @@ const gettAllpatient = asyncHandler(async(req,res)=>{
         .json(new ApiResponse(200, {}, "No record found"))
        }
 
-        else
-        {
         return res
         .status(201)
         .json(new ApiResponse(200, allPatient, "All Records."))
-        }
+        
 })
 
 const changeCurrentPassword = asyncHandler(async(req, res)=>{
@@ -249,7 +247,7 @@ const changeCurrentPassword = asyncHandler(async(req, res)=>{
 
 const getAppointments = asyncHandler(async(req,res)=>{
     const { date } = req.body
-    const doctorid = req.doctor._id
+    const doctorid = req.params.id
     if(!doctorid)
         throw new ApiError(400, "Doctor not found.")
      const appointment = await Appointment.find({
@@ -262,67 +260,88 @@ const getAppointments = asyncHandler(async(req,res)=>{
         .status(200)
         .json(new ApiResponse(200, {}, "No appointments for today."))
       }
-      else
-      {
+     
         return res
         .status(200)
         .json(new ApiResponse(200, appointment, "All todays Appointment."))
-      }
       
 })
 
 const cancelAppointments = asyncHandler(async(req,res)=>{
-    const doctorid = req.doctor._id;
     const { date } = req.body
+    const doctorid = req.params.id
+
+    if(!doctorid)
+        throw new ApiError(400, "Doctor not found.")
+
     const cancelapp = await Appointment.deleteMany({
-        doctorId: doctorid,
+        doctorId: doctorid._id,
         date: date
     })
-    if( !cancelAppointments === 0 )
+    if( cancelapp.deletedCount === 0 )
     {
         return res
         .status(200)
-        .json(new ApiResponse(200, {}, " No appointments for today."))
+        .json(new ApiResponse(200, null, " No appointments for today."))
     }
-    else
-        {
-        return res
-        .status(200)
-        .json(new ApiResponse(200, {}, "All appointments for today is canceld."))
-       }
 })
 
-const updateAvailability = asyncHandler(async(req,res)=>{
+const Availability = asyncHandler(async(req,res)=>{
     const { date } = req.body;
-    const doctorid = req.doctor._id;
+    const doctorid = req.params.id;
 
-    //lakin yh dena jaurri nhiu ha ku ku automatic date set joh rha ha. Backend mh is liya no need.
+    //lakin yh dena jaurri nhi ha ku ku automatic date set joh rha ha. Backend mh is liya no need.
     if (!date || !(date instanceof Date))
     throw new ApiError(400, "Date is required")
 
    const availability = await Appointment.find({
-    doctorId : doctorid,
+    doctorId : doctorid._id,
     date
    })
 
    if( availability.length === 0)
     return res
    .status(200)
-   .json(new ApiResponse(200, {}, "Free"))
+   .json(new ApiResponse(200, null, "Free"))
    else
    {
     return res
    .status(200)
-   .json(new ApiResponse(200, {}, "Busy"))
+   .json(new ApiResponse(200, availability, "Busy"))
    }
+})
+
+const getPatientProfile = asyncHandler(async(req,res)=>{
+    const { emailId } = req.body
+
+    if( !emailId )
+        throw new ApiError(400, "All fields are required.")
+
+    if( emailId.trim() === "" )
+        throw new ApiError(400, "Enter valid input.")
+
+    const doctorid = await Doctor.findById(req.doctor.id)
+
+    if(!doctorid)
+        throw new ApiError (400, "Invalid Doctor Id.")
+
+    const patient = await Patient.findOne({ emailId }).select("-password, -refreshToken")
+
+    if(!patient)
+       throw new ApiError (400, "Invalid EmailId.")
+
+        return res
+        .status(201)
+        .json(new ApiResponse(200, patient, "Patient Records."))
+        
 })
 
 export{
     logout,
     loginUser,
-    updateAvailability,
+    getPatientProfile,
     cancelAppointments,
-    updateAvailability,
+    Availability,
     getAppointments,
     gettAllpatient,
     registerUser,
@@ -331,5 +350,4 @@ export{
     refreshAccessToken,
     changeCurrentPassword,
     generateAccessAndRefreshToken,
-
 }

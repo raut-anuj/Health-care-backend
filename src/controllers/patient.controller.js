@@ -26,6 +26,7 @@ const generateAccessAndRefreshToken = async(patientId)=>{
     throw new ApiError(500, "Error occur while generating Access and Refresh Token.")
 }
 }
+
 const refreshAccessToken = asyncHandler(async (req, res) => {
     // Get refresh token from [cookies or body]
     const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
@@ -71,6 +72,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         throw new ApiError(401, error?.message || "Invalid refresh token");
     }
 });
+
 const registerUser = asyncHandler(async(req,res)=>{
     //yha pr aur bhi fields dena ha toh yaad rakhna. 
     const { name, age, password } = req.body
@@ -181,10 +183,13 @@ const appointment = asyncHandler(async(req,res)=>{
         const existingAppointment = await Appointment.findOne({
             doctorId: doctorperson._id,
             date,
-            time });
+            time 
+        });
 
         if (existingAppointment) {
-           throw new ApiError(400, "Doctor already booked at this time");}
+           return res
+           .status(409)
+           .json(new ApiResponse(409, {}, "Doctor already booked at this time")) };
 
        const anotherAppointment = await Appointment.findOne({
             patientId: patient._id,
@@ -192,12 +197,22 @@ const appointment = asyncHandler(async(req,res)=>{
             date
         })
 
-        if(anotherAppointment)
-            throw new ApiError(400, "Two appointment are not allowed in a day.");
+        if(anotherAppointment){
+            return res.status(201)
+            .json(new ApiResponse(201, null, "Two appointment are not allowed in a day."))
+        }
+        
+        const newAppointment = new Appointment({
+            doctorId: doctorperson._id,
+            date: date,
+            time: time,
+            patientId: patient._id
+          });
 
-        res
-        .status(201)
-        .json(new ApiResponse(201, {}, "Appointment is booked with this Doctor."))
+          await newAppointment.save();
+                return res
+                .status(201)
+                .json(new ApiResponse(201, newAppointment, "Appointment is available."))
 })
 
 const getProfile = asyncHandler(async(req,res)=>{

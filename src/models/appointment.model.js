@@ -11,8 +11,7 @@ const appointmentSchema = new mongoose.Schema({
             ref: "Doctor",
             required: "true"
         },
-            date:
-            {
+        date:{
             type: Date,
             default: Date.now
             },
@@ -24,7 +23,6 @@ const appointmentSchema = new mongoose.Schema({
             type: String,
             enum: ["scheduled", "completed", "cancelled"],
             default: "scheduled"
-        }},
-{timestamps: true});
+}}, {timestamps: true});
 
 export const Appointment = mongoose.model("Appointment", appointmentSchema);
