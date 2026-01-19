@@ -1,6 +1,6 @@
 import mongoose, {Schema}  from "mongoose"
 
-const medical_recordSchmea =new mongoose.Schmea({
+const medicalRecordSchmea =new mongoose.Schmea({
     name:{
         type:String,
         required:true,
@@ -20,4 +20,4 @@ const medical_recordSchmea =new mongoose.Schmea({
 
 },{timestamps:true})
 
-export const record= mongoose.model("record",medical_recordSchmea)
+export const record= mongoose.model("record",medicalrRecordSchmea)

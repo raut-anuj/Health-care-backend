@@ -1,24 +1,28 @@
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
+import { Admin } from "../models/admin.model.js";
+import { Patient } from "../models/patient.model.js"
 import { Doctor } from "../models/doctor.model.js";
+import { Staff } from "../models/staff.model.js"
+import { DoctorSpecialization } from "../models/doctorSpecialization.model.js"
 import jwt from "jsonwebtoken"
 import { Patient } from "../models/patient.model.js"
 import { Appointment } from "../models/appointment.model.js";
 import { get } from "http";
 
-const generateAccessAndRefreshToken = async(doctorId)=>{
+const generateAccessAndRefreshToken = async(adminId)=>{
     try{
-        const doctor = await Doctor.findById(doctorId)
-        if(!doctor)
-            throw new ApiError(400, "Doctor not found")
+        const admin = await Admin.findById(adminId)
+        if(!admin)
+            throw new ApiError(400, "Admin not found")
 
-            const accessToken = Doctor.generateAccessToken()
-            const refreshToken = Doctor.generateRefreshToken()
+            const accessToken = Admin.generateAccessToken()
+            const refreshToken = Admin.generateRefreshToken()
 
-        doctor.refreshToken=refreshToken;
+        admin.refreshToken=refreshToken;
 
-        await doctor.save( {validation:false} )
+        await admin.save( {validation:false} )
         
         return { accessToken, refreshToken }
     }
@@ -33,14 +37,14 @@ const getProfile = asyncHandler(async(req,res)=>{
     if(!email || email.trim()==="" )
         throw new ApiError(400, "Email is required")
 
-    const doctor = await Doctor.findOne({email}).select("-password -refreshToken");
+    const admin = await Admin.findOne({email}).select("-password -refreshToken");
 
-    if(!doctor)
-        throw new ApiError(400, " Doctor not found.") 
+    if(!admin)
+        throw new ApiError(400, " Admin not found.") 
 
     res
     .status(200)
-    .json(new ApiResponse(200, doctor, {}))
+    .json(new ApiResponse(200, admin, {}))
 })
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
@@ -55,16 +59,16 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             incomingRefreshToken,
             process.env.REFRESH_TOKEN_SECRET );
             
-        const doctor = await Doctor.findById(decodedToken?._id);
-        if (!doctor) throw new ApiError(401, "Invalid refresh token");
+        const admin = await Admin.findById(decodedToken?._id);
+        if (!admin) throw new ApiError(401, "Invalid refresh token");
 
         // Check if the stored refresh token matches
-        if (incomingRefreshToken !== doctor.refreshToken) {
+        if (incomingRefreshToken !== admin.refreshToken) {
             throw new ApiError(401, "Refresh token is expired or invalid");
         }
 
         // Generate new tokens
-        const { accessToken, refreshToken } = await generateAccessAndRefreshToken(doctor._id);
+        const { accessToken, refreshToken } = await generateAccessAndRefreshToken(admin._id);
 
         // Cookie options
         const options = {
@@ -105,40 +109,40 @@ const registerUser = asyncHandler(async(req,res)=>{
           throw new ApiError(400, "Invalid email format");
         }
 
-    const doctor= await Doctor.create({ 
+    const admin= await Admin.create({ 
             name:name.trim(),
             age,
             password
         })
 
-        //console.log(doctor);
+        //console.log(admin);
 
   res
   .status(201)
-  .json(new ApiResponse(201, doctor, "successfull registered"))
+  .json(new ApiResponse(201, admin, "successfull registered"))
 
 })
 
 const updateProfile = asyncHandler(async(req,res)=>{
     const{ email, contactNumber, age, address }=req.body
 
-   const doctor = await Doctor.findOne({email})
+   const admin = await Admin.findOne({email})
 
 // Agar email mil gaya,
-// 👉 Toh doctor ka poora data aa jata hai (jo bhi fields model me hain).
+// 👉 Toh admin ka poora data aa jata hai (jo bhi fields model me hain).
 
-    if(!doctor)
-        throw new ApiError(400, "Doctor not found")
+    if(!admin)
+        throw new ApiError(400, "Admin not found")
 
-        contactNumber: doctor.contactNumber;
-        age: doctor.age;
-        address: doctor.address;
-        await Doctor.save();
+        contactNumber: admin.contactNumber;
+        age: admin.age;
+        address: admin.address;
+        await Admin.save();
 
    res.status(200).json(new ApiResponse(200, {
-        contactNumber: doctor.contactNumber,
-        age: doctor.age,
-        address: doctor.address
+        contactNumber: admin.contactNumber,
+        age: admin.age,
+        address: admin.address
     }, "Details Updated"));
 })
 
@@ -155,15 +159,15 @@ const loginUser = asyncHandler(async(req,res)=>{
         if (!emailRegex.test(email)) 
           throw new ApiError(400, "Invalid email format");
 
-    const isPasswordCorrect = await Doctor.isPasswordCorrect(password)
+    const isPasswordCorrect = await Admin.isPasswordCorrect(password)
     if(!isPasswordCorrect)
         throw new ApiError("Password is invalid.")
 
-    const doctor = await Doctor.findOne( { email } )
+    const admin = await Admin.findOne( { email } )
 
-   const { accessToken, refreshToken } = generateAccessAndRefreshToken(doctor._id)
+   const { accessToken, refreshToken } = generateAccessAndRefreshToken(admin._id)
 
-   const loggedInUser = await Doctor.findById(doctor._id).select("-password -refreshToken")
+   const loggedInUser = await Admin.findById(admin._id).select("-password -refreshToken")
 
     const options = {
         httpOnly: true,
@@ -176,15 +180,15 @@ const loginUser = asyncHandler(async(req,res)=>{
     .json(new ApiResponse(
         200, 
         { 
-           doctor: loggedInUser, accessToken, refreshToken  
+           admin: loggedInUser, accessToken, refreshToken  
         },
          "Logged in Successfull"))
 
 })
 
 const logout = asyncHandler(async(req,res)=>{
-    Doctor.findByIdAndDelete(
-        req.doctor._id,
+    Admin.findByIdAndDelete(
+        req.admin._id,
         {
             $unset:{
             refreshToken:1}
@@ -201,45 +205,20 @@ const logout = asyncHandler(async(req,res)=>{
     .status(200)
     .clearCookie("accessToken",options)
     .clearCookie("refreshToken",options)
-    .json(new ApiResponse(200,{},"Doctor logged out"))
-})
-
-const gettAllpatient = asyncHandler(async(req,res)=>{
-    const { doctor_id } = await Doctor.findById(req.doctor._id)
-
-    if(!doctor_id)
-        throw new ApiError (400, "Invalid Id.")
-
-    const allPatient = await MedicalRecord.find({
-        doctor_id : doctor_id
-
-    })
-    if( allPatient.length === 0 )
-       {
-        return res
-        .status(201)
-        .json(new ApiResponse(200, {}, "No record found"))
-       }
-
-        else
-        {
-        return res
-        .status(201)
-        .json(new ApiResponse(200, allPatient, "All Records."))
-        }
+    .json(new ApiResponse(200,{},"Admin logged out"))
 })
 
 const changeCurrentPassword = asyncHandler(async(req, res)=>{
   const { oldPassword, newPassword }= req.body
 
-  const doctor = await Doctor.findById(req.user?._id)
-  const isPasswordCorrect = await doctor.isPasswordCorrect(oldPassword)
+  const admin = await Admin.findById(req.user?._id)
+  const isPasswordCorrect = await admin.isPasswordCorrect(oldPassword)
 
   if(!isPasswordCorrect){
     throw new ApiError(400,"Invalid old password")
   }
-  doctor.password = newPassword
-  await doctor.save( {validateBeforeSave:false} )
+  admin.password = newPassword
+  await admin.save( {validateBeforeSave:false} )
 
   return res
   .status(200)
@@ -247,89 +226,78 @@ const changeCurrentPassword = asyncHandler(async(req, res)=>{
 
 })
 
-const getAppointments = asyncHandler(async(req,res)=>{
-    const { date } = req.body
-    const doctorid = req.doctor._id
-    if(!doctorid)
-        throw new ApiError(400, "Doctor not found.")
-     const appointment = await Appointment.find({
-            doctorId : doctorid._id,
-            date
-      })
-      if( appointment.length === 0 )
-      {
-        return res
-        .status(200)
-        .json(new ApiResponse(200, {}, "No appointments for today."))
-      }
-      else
-      {
-        return res
-        .status(200)
-        .json(new ApiResponse(200, appointment, "All todays Appointment."))
-      }
-      
-})
-
-const cancelAppointments = asyncHandler(async(req,res)=>{
-    const doctorid = req.doctor._id;
-    const { date } = req.body
-    const cancelapp = await Appointment.deleteMany({
-        doctorId: doctorid,
-        date: date
-    })
-    if( !cancelAppointments === 0 )
+const allDoctorsList = asyncHandler(async(req,res)=>{
+   const admin = await Admin.findById(req.params.id)
+   if(!admin)
+    throw new ApiError(400, "Invalid Admin.")
+   const doctor = Doctor.find().select("-password -refreshTooken")
+    if( doctor.length === 0 )
     {
         return res
         .status(200)
-        .json(new ApiResponse(200, {}, " No appointments for today."))
+        .json(new ApiResponse(200, [], "No Doctor in records found"))
     }
-    else
-        {
+    return res
+        .status(200)
+        .json(new ApiResponse(200, doctor, "Doctors List."))  
+})
+
+const allStaffsList = asyncHandler(async(req,res)=>{
+    const admin = await Admin.findById(req.params.id)
+    if(!admin)
+        throw new ApiError(400, "Invalid Id.")
+    const staff = await Staff.find().select("-password -refreshToken")
+    if( staff.length === 0 ){
         return res
         .status(200)
-        .json(new ApiResponse(200, {}, "All appointments for today is canceld."))
-       }
+        .json(new ApiResponse(200, [], "No Staff in records found"))
+    }
+    return res
+        .status(200)
+        .json(new ApiResponse(200, staff, "Staffs List."))  
 })
 
-const updateAvailability = asyncHandler(async(req,res)=>{
-    const { date } = req.body;
-    const doctorid = req.doctor._id;
-
-    //lakin yh dena jaurri nhiu ha ku ku automatic date set joh rha ha. Backend mh is liya no need.
-    if (!date || !(date instanceof Date))
-    throw new ApiError(400, "Date is required")
-
-   const availability = await Appointment.find({
-    doctorId : doctorid,
-    date
-   })
-
-   if( availability.length === 0)
+const allPatientsList = asyncHandler(async(req,res)=>{
+    const admin = await Admin.findById(req.params.id)
+    if(!admin)
+        throw new ApiError(400, "Invalid Id.")
+    const patient = await Patient.find().select("-password -refreshToken")
+    if( patient.length === 0 ){
+        return res
+        .status(200)
+        .json(new ApiResponse(200, [], "No Patient in records found"))
+    }
     return res
-   .status(200)
-   .json(new ApiResponse(200, {}, "Free"))
-   else
-   {
-    return res
-   .status(200)
-   .json(new ApiResponse(200, {}, "Busy"))
-   }
+        .status(200)
+        .json(new ApiResponse(200, patient, "Patients List."))  
 })
 
-export{
+const alldocspec = asyncHandler(async(req,res)=>{
+    const admin = await findById(req.params.id)
+    if(!admin)
+        throw new ApiError(400, "Invalid Id.")
+    const special = await DoctorSpecialization.find()
+    if( special.length === 0 )
+    {
+        return res.status(200)
+        .json(new ApiResponse(200, [], "No records found"))
+    }
+    return res.status(200)
+    .json(new ApiResponse(200, special ,"Records."))
+})
+
+export {
+    alldocspec,
+    allDoctorsList,
+    allStaffsList,
+    allStaffsList,
     logout,
     loginUser,
-    updateAvailability,
-    cancelAppointments,
-    updateAvailability,
-    getAppointments,
-    gettAllpatient,
     registerUser,
     updateProfile,
     getProfile,
     refreshAccessToken,
     changeCurrentPassword,
-    generateAccessAndRefreshToken,
+    generateAccessAndRefreshToken
 
 }

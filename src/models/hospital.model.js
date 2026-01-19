@@ -27,7 +27,6 @@ const hospitalSchmea =new mongoose.Schmea({
             required:true
         } 
     ],
-
 },{timestamps:true})
 
 export const hospital= mongoose.model("hospital",hospitalSchmea)

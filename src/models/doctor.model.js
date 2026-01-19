@@ -15,7 +15,7 @@ const doctorSchema = new mongoose.Schema({
         type:String,
         required:true,
     },
-    experinceinYears:{
+    experince:{
         type:Number,
         default:0
     },
@@ -37,8 +37,16 @@ const doctorSchema = new mongoose.Schema({
         type:String,
         required:true
     },
+    password:{
+        type:String,
+        required:true
+    },
     age:{
         type:Number,
+        required:true
+    },
+    specialization:{
+        type:String,
         required:true
     },
     sex:{

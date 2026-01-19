@@ -1,4 +1,6 @@
 import mongoose, {Schema}  from "mongoose"
+import jwt from "jsonwebtoken";
+
 
 const medicalRecordSchema = new mongoose.Schema({
     patient_id:{
@@ -12,7 +14,7 @@ const medicalRecordSchema = new mongoose.Schema({
     report:{
         type:String,
         required:true
-    },
+ },
     date:{
         type: Date,
         default: Date.now

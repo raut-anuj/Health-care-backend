@@ -7,6 +7,10 @@ const staffSchema = new mongoose.Schema({
         type:String,
         required:true,
     },
+    password:{
+        required:true,
+        type:String
+    },
     emailId:{
         type:String,
         require:true

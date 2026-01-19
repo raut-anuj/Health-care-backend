@@ -1,6 +1,5 @@
 import mongoose, {Schema}  from "mongoose"
-import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken"
 
 const adminSchema = new mongoose.Schema({
     name:{
@@ -10,6 +9,10 @@ const adminSchema = new mongoose.Schema({
     emailId:{
         type:String,
         require:true
+    },
+    password:{
+        type:String,
+        required:true
     },
     address:{
         type:String,
@@ -31,16 +34,7 @@ const adminSchema = new mongoose.Schema({
     contactNumber:{
       type:Number,
       required:true
-    },
-    experinceinYears:{
-        type:Number,
-        default:0
-    },
-    role:
-    {
-        type:[ "AdminBoy", "Nurse" ],
-        required: true
-    },
+    }
 }, {timestamps:true})
 
 adminSchema.methods.isPasswordCorrect = async function(password){
