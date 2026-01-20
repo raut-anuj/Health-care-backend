@@ -245,72 +245,6 @@ const changeCurrentPassword = asyncHandler(async(req, res)=>{
 
 })
 
-const getAppointments = asyncHandler(async(req,res)=>{
-    const { date } = req.body
-    const doctorid = req.params.id
-    if(!doctorid)
-        throw new ApiError(400, "Doctor not found.")
-     const appointment = await Appointment.find({
-            doctorId : doctorid._id,
-            date
-      })
-      if( appointment.length === 0 )
-      {
-        return res
-        .status(200)
-        .json(new ApiResponse(200, {}, "No appointments for today."))
-      }
-     
-        return res
-        .status(200)
-        .json(new ApiResponse(200, appointment, "All todays Appointment."))
-      
-})
-
-const cancelAppointments = asyncHandler(async(req,res)=>{
-    const { date } = req.body
-    const doctorid = req.params.id
-
-    if(!doctorid)
-        throw new ApiError(400, "Doctor not found.")
-
-    const cancelapp = await Appointment.deleteMany({
-        doctorId: doctorid._id,
-        date: date
-    })
-    if( cancelapp.deletedCount === 0 )
-    {
-        return res
-        .status(200)
-        .json(new ApiResponse(200, null, " No appointments for today."))
-    }
-})
-
-const Availability = asyncHandler(async(req,res)=>{
-    const { date } = req.body;
-    const doctorid = req.params.id;
-
-    //lakin yh dena jaurri nhi ha ku ku automatic date set joh rha ha. Backend mh is liya no need.
-    if (!date || !(date instanceof Date))
-    throw new ApiError(400, "Date is required")
-
-   const availability = await Appointment.find({
-    doctorId : doctorid._id,
-    date
-   })
-
-   if( availability.length === 0)
-    return res
-   .status(200)
-   .json(new ApiResponse(200, null, "Free"))
-   else
-   {
-    return res
-   .status(200)
-   .json(new ApiResponse(200, availability, "Busy"))
-   }
-})
-
 const getPatientProfile = asyncHandler(async(req,res)=>{
     const { emailId } = req.body
 
@@ -346,8 +280,5 @@ export{
     changeCurrentPassword,
     generateAccessAndRefreshToken,
     getPatientProfile,
-    Availability,
-    getAppointments,
-    gettAllpatient,
-    cancelAppointments,
+    gettAllpatient
 }
