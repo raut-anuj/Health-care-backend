@@ -6,6 +6,10 @@ const paymentSchema = new mongoose.Schema({
         ref:"Patient",
         required: true
     },
+    date:{
+        type: Date,
+        default: Date.now
+    },
     amount:{
         type: Number,
         required: true

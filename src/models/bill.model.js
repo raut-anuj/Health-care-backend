@@ -3,7 +3,7 @@ import mongoose, {Schema, Types} from "mongoose";
 const billSchema = new mongoose.Schema({
     patientId:{
        type:mongoose.Schema.Types.ObjectId,
-       ref:"Appointment" ,
+       ref:"Patient" ,
        required:true
     },
     appointmentId:{
@@ -19,12 +19,8 @@ const billSchema = new mongoose.Schema({
         type:Number,
         required:true
     },
-    dueAmount:{
-        type:Number,
-        required:true
-    },
     billStatus:{
-        enum:["UNPAID", "PAID"],
+        enum:["UNPAID", "PARTIAL", "PAID"],
         required:true
     }
 }, {timestamps:true})

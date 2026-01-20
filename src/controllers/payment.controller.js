@@ -8,13 +8,175 @@ import { Appointment } from "../models/appointment.model.js";
 import { Admin } from "../models/admin.model.js";
 import { Patient } from "../models/patient.model.js"
 import { Payment } from "../models/payment.model.js";
+import { Bill } from "../models/bill.model.js"
 
-const payBill = asyncHandler(async(req,res)=>{
-    const { billid } = req.body
-    const bill = await Patient.findById(billid)
-    if(!bill)
-        throw new ApiError(400, "Bill not fonund")
+const updatePaymentStatus = asyncHandler(async(req,res)=>{
+    const patientId = req.params.id; 
+    const patient = await Patient.findById(patientId);
+    if(!patient)
+        throw new ApiError(404, "Invalid Patient Id.")
 
+    const { status } = req.body
+    if(!status)
+        throw new ApiError(400, "Status is required.")
+    const payment = await Payment.find({
+        status: status,
+        patientId: patient._id
+    });
+    if (payment.length === 0)
+        throw new ApiError(404, "No Patient found.");
 
+    return res
+        .status(200)
+        .json(new ApiResponse(200, null, "Status updated of that patient."));
+});
 
-})
+const getPaymentHistoryByPatient = asyncHandler(async(req,res)=>{
+    const patientId = req.params.id; 
+    const patient = await Patient.findById(patientId);
+    if(!patient)
+        throw new ApiError(404, "Invalid Patient Id.")
+    const payment = await Payment.find({
+        patientId: patient._id
+    });
+    if (payment.length === 0)
+        throw new ApiError(404, "No Payment found.");
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, payment, "All Payments"));
+});
+
+const getAllPayments= asyncHandler(async(req,res)=>{
+    const patientId = req.params.id; 
+    const patient = await Patient.findById(patientId);
+
+    if(!patient)
+        throw new ApiError(404, "Invalid Patient Id.")
+    
+    const { date } = req.body;
+    if (!date)
+        throw new ApiError(400, "Date is required");
+
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+    const payment = await Payment.find({
+        date: date
+    });
+     if (payment.length === 0)
+        throw new ApiError(404, "No Payment found.");
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, payment, "Payment"));
+});
+
+const getPaymentByStatus = asyncHandler(async(req,res)=>{
+    const patientId = req.params.id; 
+    const patient = await Patient.findById(patientId);
+
+    if(!patient)
+        throw new ApiError(404, "Invalid Patient Id.")
+
+    const { status } = req.body;
+    if (!status)
+        throw new ApiError(400, "Status is required");
+    const payment = await Payment.find({
+        status: status
+    });
+    if (payment.length === 0)
+        throw new ApiError(404, "No Payment found on that Status.");
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, payment, "Payment with given Status"));
+
+});
+
+const payPayment = asyncHandler(async(req,res)=>{
+    const patientId = req.params.id; 
+    const patient = await Patient.findById(patientId);
+
+    if(!patient)
+        throw new ApiError(404, "Invalid Patient Id.")
+
+    const { amount, method } = req.body
+    if( !amount || !method )
+        throw new ApiError(400, "Amount or method is required.")
+
+    if(amount <= 0 || method.trim()==0)
+        throw new ApiError(400, "Invalid entry.")
+
+    const bills = await Bill.findById(patient._id)
+    if(!bills)
+        throw new ApiError(400, "Bill not found.")
+
+    const netAmount =
+        bills.totalAmount - bills.paidAmount;
+
+        if( amount > netAmount)
+            throw new ApiError( 400, `Payment exceeds remaining amount. Remaining: ${netAmount}`);
+
+           const bill = await Bill.findOne({
+                patientId: patientId,
+                billStatus: { $ne: "PAID" }
+            });
+            if (!bill)
+                   throw new ApiError(404, "No unpaid bill found");
+
+             // 1️⃣ Payment CREATE
+            const payment = await Payment.create({
+                patientId,
+                amount,
+                method,
+                status: "SUCCESS"
+            });
+
+            // 2️⃣ Bill UPDATE
+            bill.paidAmount += amount;
+
+            if (bill.paidAmount === bill.totalAmount) {
+                bill.billStatus = "PAID";
+            } else {
+                bill.billStatus = "PARTIAL";
+            }
+
+            await bill.save();
+
+        return res.status(200).json( new ApiResponse(
+            200,
+            {
+                payment,
+                bill,
+                remainingAmount: bill.totalAmount - bill.paidAmount
+            },
+            "Payment successful" ) );
+});
+
+const getPatientPaymentsByMethod = asyncHandler(async(req,res)=>{
+      const patient = await Patient.findById(req.params.id);
+        if (!patient)
+            throw new ApiError(404, "Invalid Patient Id.");
+
+        const payment = await Payment.find({
+                 patientId: patient._id  });
+
+        if ( payment.length === 0)
+            throw new ApiError(404, "No Payment found.");
+
+        return res
+        .status(200)
+        .json(new ApiResponse(200, payment, "Payment History."))     
+});
+
+export{ 
+    getPatientPaymentsByMethod,
+    payPayment,
+    updatePaymentStatus,
+    getPaymentByStatus,
+    getPaymentHistoryByPatient,
+    getAllPayments 
+}

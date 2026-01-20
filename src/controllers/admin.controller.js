@@ -10,6 +10,7 @@ import jwt from "jsonwebtoken"
 import { Patient } from "../models/patient.model.js"
 import { Appointment } from "../models/appointment.model.js";
 import { get } from "http";
+import { Payment } from "../models/payment.model.js"
 
 const generateAccessAndRefreshToken = async(adminId)=>{
     try{
@@ -371,9 +372,46 @@ const { emailId } = req.body
     .json(new ApiResponse(200, doctor, "Doctor Record."))
 })
 
+const getPaymentsByMethod = asyncHandler(async (req, res) => {
+    const { method ,date } = req.body;
+
+    if (!date)
+        throw new ApiError(400, "Date is required");
+
+    if (!method || method.trim() === "")
+        throw new ApiError(400, "Payment method is required.");
+
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    const adminId = req.params.id;
+    const admin = await Admin.findById(adminId);
+    if (!admin)
+        throw new ApiError(404, "Invalid Admin Id.");
+
+    const payment = await Payment.find({
+        method: method.trim(),
+        date: {
+            $gte: startDate,
+            $lte: endDate
+        }
+    });
+
+    if (payment.length === 0)
+        throw new ApiError(404, "No payment records found.");
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, payment, "Payment history"));
+});
+
 export {
     deleteUser,
     aboutPaitent,
+    getPaymentsByMethod,
     aboutStaff,
     aboutDoctor,
     Appointments,

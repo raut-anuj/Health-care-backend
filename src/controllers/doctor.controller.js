@@ -344,10 +344,10 @@ export{
     getProfile,
     refreshAccessToken,
     changeCurrentPassword,
-    
+    generateAccessAndRefreshToken,
     getPatientProfile,
     Availability,
     getAppointments,
     gettAllpatient,
-    generateAccessAndRefreshToken,cancelAppointments,
+    cancelAppointments,
 }
