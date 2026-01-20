@@ -339,15 +339,15 @@ const getPatientProfile = asyncHandler(async(req,res)=>{
 export{
     logout,
     loginUser,
-    getPatientProfile,
-    cancelAppointments,
-    Availability,
-    getAppointments,
-    gettAllpatient,
     registerUser,
     updateProfile,
     getProfile,
     refreshAccessToken,
     changeCurrentPassword,
-    generateAccessAndRefreshToken,
+    
+    getPatientProfile,
+    Availability,
+    getAppointments,
+    gettAllpatient,
+    generateAccessAndRefreshToken,cancelAppointments,
 }
