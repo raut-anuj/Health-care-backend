@@ -23,6 +23,11 @@ const appointmentSchema = new mongoose.Schema({
             type: String,
             enum: ["scheduled", "completed", "cancelled"],
             default: "scheduled"
-}}, {timestamps: true});
+            },
+        amount: {
+            type: Number,
+            required: true
+        }
+}, {timestamps: true});
 
 export const Appointment = mongoose.model("Appointment", appointmentSchema);

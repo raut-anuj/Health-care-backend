@@ -7,6 +7,10 @@ const doctorSchema = new mongoose.Schema({
         type:String,
         required:true,
     },
+    fee:{ 
+        type: Number, 
+        required: true 
+    },
     emailId:{
         type:String,
         required:true

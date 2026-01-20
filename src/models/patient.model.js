@@ -36,15 +36,14 @@ const patientSchema =new mongoose.Schema({
         enum:["Male","Female","Other"],
         // required:true
     },
-    addmittedIn:{
-        type:mongoose.Schema.Type.ObjectId,
-        ref:"hospital"
-    },
     contactNumber:{
         type:Number,
         //   required:true
     },
-
+    bill:{
+        type:Schema.Types.ObjectId,     
+        ref:"Bill"
+    }
 },
 {timestamps:true})
 

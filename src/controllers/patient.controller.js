@@ -6,6 +6,8 @@ import jwt from "jsonwebtoken"
 import { Doctor } from "../models/doctor.model.js";
 import { Appointment } from "../models/appointment.model.js";
 import { get } from "http";
+import { Bill } from "../models/bill.model.js"
+import { Payment } from "../models/payment.model.js"
 
 const generateAccessAndRefreshToken = async(patientId)=>{
     try{
@@ -206,7 +208,8 @@ const appointment = asyncHandler(async(req,res)=>{
             doctorId: doctorperson._id,
             date: date,
             time: time,
-            patientId: patient._id
+            patientId: patient._id,
+            amount: doctorperson.fee
           });
 
           await newAppointment.save();
@@ -324,16 +327,67 @@ const changeCurrentPassword = asyncHandler(async(req, res)=>{
 
 })
 
+const createBill = asyncHandler(async(req,res)=>{
+     const patientId = req.params.id;
+     
+    const patient = await Patient.findById(patientId);
+    if(!patient)
+        throw new ApiError(404, "Invalid Patient Id.")
+
+    const appointment = await Appointment.find(patient._id)
+    if(!appointment)
+        throw new ApiError(404, "No appointments found for this patient.")
+
+    const totalAmount = appointment.reduce((sum, app) => sum + (app.amount || 0), 0);
+
+    const payment = await Payment.create({
+        patientId: patient._id,
+        amount: totalAmount,
+        method:"CARD",
+        status:"PENDING"
+    })
+    return res
+    .status(200)
+    .json(new ApiResponse(200, payment, "Your Payment."))
+
+})
+
+const getStatus = asyncHandler(async(req,res)=>{
+    const { status } = req.body
+    const patientId = req.params.id;
+     
+    if(!status)
+        throw new ApiError(400, "Status is required")
+
+    const patient = await Patient.findById(patientId);
+    if(!patient)
+        throw new ApiError(404, "Invalid Patient Id.")
+
+       const payment = await Payment.find({
+            patientId: patient._id,
+            status: status
+        });
+    
+    return res
+    .status(200)
+    .json(new ApiResponse(200, payment, "Status of payment."))
+})
+
 export {
+    //basics functions
     generateAccessAndRefreshToken,
     refreshAccessToken,
     registerUser,
     changeCurrentPassword,
     loginUser,
     logout,
+    getProfile,
+    updateProfile,
+
+    //advance functions
     cancelAppointment,
     getAppointments,
-    getProfile,
     appointment,
-    updateProfile
+    createBill,
+    getStatus
 }
