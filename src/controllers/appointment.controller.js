@@ -138,8 +138,38 @@ const cancelAppointmentByPatient = asyncHandler(async(req,res)=>{
         .json(new ApiResponse(200, null, " Patient appointment deleted.")) }
 });
 
+const getTodayAppointmentsCount = asyncHandler(async(req,res)=>{
+    const { date } = req.body
+    if (!date)
+       throw new ApiError(400, "Date is required");
+
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    const todayCount = await Appointment.countDocuments({
+            date: {
+                $gte: startOfDay,
+                $lte: endOfDay
+            }
+        });
+
+    return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { todayAppointments: count },
+        "Doctor today's appointments count fetched"
+      )
+    );
+});
+
 export{
     Availability,
+    getTodayAppointmentsCount,
     cancelDoctorAppointments,
     cancelAppointmentByPatient,
     getAppointmentsByDoctor,
