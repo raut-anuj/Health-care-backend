@@ -350,7 +350,7 @@ const getPaymentHistory = asyncHandler(async(req, res)=>{
     if(!patient)
         throw new ApiError(400, "Invalid Patient.")
     const payment = await Payment.find({
-        patientId: patient.id
+        patientId: patient._id
     })
 
     if( payment.length == 0 )

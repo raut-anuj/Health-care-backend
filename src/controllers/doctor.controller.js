@@ -25,7 +25,7 @@ const generateAccessAndRefreshToken = async(doctorId)=>{
     catch(error){
     throw new ApiError(500, "Error occur while generating Access and Refresh Token.")
 }
-}
+};
 
 const getProfile = asyncHandler(async(req,res)=>{
     const { email } = req.body
@@ -41,7 +41,7 @@ const getProfile = asyncHandler(async(req,res)=>{
     res
     .status(200)
     .json(new ApiResponse(200, doctor, {}))
-})
+});
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
     // Get refresh token from [cookies or body]
@@ -87,7 +87,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     } catch (error) {
         throw new ApiError(401, error?.message || "Invalid refresh token");
     }
-})
+});
 
 const registerUser = asyncHandler(async(req,res)=>{
     //yha pr aur bhi fields dena ha toh yaad rakhna. 
@@ -117,7 +117,7 @@ const registerUser = asyncHandler(async(req,res)=>{
   .status(201)
   .json(new ApiResponse(201, doctor, "successfull registered"))
 
-})
+});
 
 const updateProfile = asyncHandler(async(req,res)=>{
     const{ email, contactNumber, age, address }=req.body
@@ -140,7 +140,7 @@ const updateProfile = asyncHandler(async(req,res)=>{
         age: doctor.age,
         address: doctor.address
     }, "Details Updated"));
-})
+});
 
 const loginUser = asyncHandler(async(req,res)=>{
     const { password, name, email } = req.body
@@ -180,7 +180,7 @@ const loginUser = asyncHandler(async(req,res)=>{
         },
          "Logged in Successfull"))
 
-})
+});
 
 const logout = asyncHandler(async(req,res)=>{
     Doctor.findByIdAndDelete(
@@ -202,7 +202,7 @@ const logout = asyncHandler(async(req,res)=>{
     .clearCookie("accessToken",options)
     .clearCookie("refreshToken",options)
     .json(new ApiResponse(200,{},"Doctor logged out"))
-})
+});
 
 const gettAllpatient = asyncHandler(async(req,res)=>{
     const doctorid = await Doctor.findById(req.doctor.id)
@@ -225,7 +225,7 @@ const gettAllpatient = asyncHandler(async(req,res)=>{
         .status(201)
         .json(new ApiResponse(200, allPatient, "All Records."))
         
-})
+});
 
 const changeCurrentPassword = asyncHandler(async(req, res)=>{
   const { oldPassword, newPassword }= req.body
@@ -243,7 +243,7 @@ const changeCurrentPassword = asyncHandler(async(req, res)=>{
   .status(200)
   .json(new ApiResponse(200,{},"Password changed successfully"))
 
-})
+});
 
 const getPatientProfile = asyncHandler(async(req,res)=>{
     const { emailId } = req.body
@@ -268,7 +268,23 @@ const getPatientProfile = asyncHandler(async(req,res)=>{
         .status(201)
         .json(new ApiResponse(200, patient, "Patient Records."))
         
-})
+});
+
+const getTodayAppointments = asyncHandler(async(req,res)=>{
+    const doctor = await Doctor.findById(req.params.id)
+    if(!doctor)
+        throw new ApiError(400, "No doctor found.")
+
+    const appointment = await Appointment.find({
+        doctorId: doctor._id
+    })
+    if( appointment.length == 0)
+        throw new ApiError(400, "No Appointment for today.");
+    return res
+    .status(200)
+    .json(new ApiResponse(200, appointment, "All Appointment of today."))
+
+});
 
 export{
     logout,
@@ -279,6 +295,8 @@ export{
     refreshAccessToken,
     changeCurrentPassword,
     generateAccessAndRefreshToken,
+
     getPatientProfile,
-    gettAllpatient
+    gettAllpatient,
+    getTodayAppointments
 }
