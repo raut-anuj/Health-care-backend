@@ -15,10 +15,6 @@ const patientSchema =new mongoose.Schema({
         type:String,
         require:true
     },
-    diagonsedWith:{
-        type:String,
-        //required:true
-    }, 
     address:{
         type:String,
         // required:true
@@ -41,8 +37,8 @@ const patientSchema =new mongoose.Schema({
         //   required:true
     },
     bill:{
-        type:Schema.Types.ObjectId,     
-        ref:"Bill"
+        type: mongoose.Schema.Types.ObjectId,     
+        ref: "Bill"
     }
 },
 {timestamps:true})
