@@ -274,7 +274,7 @@ const allPatientsList = asyncHandler(async(req,res)=>{
         .json(new ApiResponse(200, patient, "Patients List."))  
 });
 
-const alldocspec = asyncHandler(async(req,res)=>{
+const allDocSpec = asyncHandler(async(req,res)=>{
     const admin = await Admin.findById(req.params.id)
 
     if(!admin)
@@ -588,7 +588,7 @@ export {
     aboutStaff,
     
     Appointments,
-    alldocspec,
+    allDocSpec,
     
     allDoctorsList,
     allStaffsList,
