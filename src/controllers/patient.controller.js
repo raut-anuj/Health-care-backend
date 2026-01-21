@@ -8,6 +8,7 @@ import { Appointment } from "../models/appointment.model.js";
 import { get } from "http";
 import { Bill } from "../models/bill.model.js"
 import { Payment } from "../models/payment.model.js"
+import { Bill } from "../models/bill.model.js"
 
 const generateAccessAndRefreshToken = async(patientId)=>{
     try{
@@ -27,7 +28,7 @@ const generateAccessAndRefreshToken = async(patientId)=>{
     catch(error){
     throw new ApiError(500, "Error occur while generating Access and Refresh Token.")
 }
-}
+};
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
     // Get refresh token from [cookies or body]
@@ -102,7 +103,7 @@ const registerUser = asyncHandler(async(req,res)=>{
   .status(201)
   .json(new ApiResponse(201, patient, "successfull registered"))
 
-})
+});
 
 const loginUser = asyncHandler(async(req,res)=>{
     const { password, name, email } = req.body
@@ -142,7 +143,7 @@ const loginUser = asyncHandler(async(req,res)=>{
         },
          "Logged in Successfull"))
 
-})
+});
 
 const logout = asyncHandler(async(req,res)=>{
     Patient.findByIdAndDelete(
@@ -164,7 +165,7 @@ const logout = asyncHandler(async(req,res)=>{
     .clearCookie("accessToken",options)
     .clearCookie("refreshToken",options)
     .json(new ApiResponse(200,{},"Patient logged out"))
-})
+});
 
 const appointment = asyncHandler(async(req,res)=>{
     const { name, email, drname, date, time }= req.body
@@ -216,7 +217,7 @@ const appointment = asyncHandler(async(req,res)=>{
                 return res
                 .status(201)
                 .json(new ApiResponse(201, newAppointment, "Appointment is available."))
-})
+});
 
 const getProfile = asyncHandler(async(req,res)=>{
     const { email } = req.body
@@ -232,7 +233,7 @@ const getProfile = asyncHandler(async(req,res)=>{
     res
     .status(200)
     .json(new ApiResponse(200, patient, {}))
-})
+});
 
 const updateProfile = asyncHandler(async(req,res)=>{
     const{ email, contactNumber, age, address }=req.body
@@ -252,7 +253,7 @@ const updateProfile = asyncHandler(async(req,res)=>{
         age: patient.age,
         address: patient.address
     }, "Details Updated"));
-})
+});
 
 const getAppointments =asyncHandler(async(req,res)=>{
     const{ email } = req.body
@@ -275,7 +276,7 @@ const getAppointments =asyncHandler(async(req,res)=>{
         return res
         .status(200)
         .json(new ApiResponse(201, getApp, "Appointments fetched successfully.")) }
-})
+});
 
 const cancelAppointment =asyncHandler(async(req,res)=>{
     const { email }=req.body
@@ -325,8 +326,40 @@ const changeCurrentPassword = asyncHandler(async(req, res)=>{
   .status(200)
   .json(new ApiResponse(200,{},"Password changed successfully"))
 
-})
+});
 
+const getMyBills = asyncHandler(async(req, res)=>{
+    const patient = await Patient.findById(req.params.id)
+    if(!patient)
+        throw new ApiError(400, "Invalid Patient.")
+
+    const bill = await Bill.find({
+        patientId: patient.id
+    })
+
+    if( bill.length == 0 )
+        throw new ApiError(400, "No Payment found.")
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, bill, "Payments."))
+});
+
+const getPaymentHistory = asyncHandler(async(req, res)=>{
+    const patient = await Patient.findById(req.params.id)
+    if(!patient)
+        throw new ApiError(400, "Invalid Patient.")
+    const payment = await Payment.find({
+        patientId: patient.id
+    })
+
+    if( payment.length == 0 )
+        throw new ApiError(400, "No Payment found.")
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, payment, "Payments."))
+});
 
 export {
     //basics functions
@@ -342,5 +375,7 @@ export {
     //advance functions
     cancelAppointment,
     getAppointments,
-    appointment
+    appointment,
+    getMyBills,
+    getPaymentHistory
 }
