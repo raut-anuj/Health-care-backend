@@ -11,6 +11,7 @@ import { Patient } from "../models/patient.model.js"
 import { Appointment } from "../models/appointment.model.js";
 import { get } from "http";
 import { Payment } from "../models/payment.model.js"
+import { Bill } from "../models/bill.model.js"
 
 const generateAccessAndRefreshToken = async(adminId)=>{
     try{
@@ -532,6 +533,45 @@ const getMonthlyRevenue = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, totalRevenue, "Total Revenue of this date."));
 });
 
+const getAllBills = asyncHandler(async (req, res) => {
+   const admin = await findById(req.params.id)
+   if(!admin)
+    throw new ApiError(400, "Inavlid Admin.")
+
+   const bill = await Bill.find();
+
+   if( bill.length == 0 )
+    throw new ApiError(400, "No bill found.")
+
+    return res
+    .status(200) 
+    .json(new ApiResponse(200, bill, "Total Bills"))
+
+});
+
+const dateWiseBills = asyncHandler(async (req, res) => {
+    const admin = await Admin.findById(req.params.id)
+    if(!admin)
+        throw new ApiError(400, "Invalid Id.")
+    const { date } = req.body
+    if( !date || date.trim() == 0 )
+        throw new ApiError(" Date field required. ")
+
+    const startDate = new Date(date)
+    startDate.setHours(0, 0, 0, 0)
+    const endDate = new Date(date)
+    endDate.setHours(24, 59, 59, 999)
+    const bill = await Bill.find({
+        date
+    });
+    if( bill.length == 0 )
+        throw new ApiError(400, `No bill found for ${date}`);
+    return res
+    .status(200)
+    .json(new ApiResponse(200, bill, `Bills till ${date}`));
+
+});
+
 export {
     logout,
     loginUser,
@@ -557,6 +597,8 @@ export {
     getHospitalRevenue,
     getPaymentsByMethod,
     getDailyRevenue,
-    getMonthlyRevenue
+    getMonthlyRevenue,
+    getAllBills,
+    dateWiseBills
     
 }
