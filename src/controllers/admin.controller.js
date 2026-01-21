@@ -30,7 +30,7 @@ const generateAccessAndRefreshToken = async(adminId)=>{
     catch(error){
     throw new ApiError(500, "Error occur while generating Access and Refresh Token.")
 }
-}
+};
 
 const getProfile = asyncHandler(async(req,res)=>{
     const { email } = req.body
@@ -46,7 +46,7 @@ const getProfile = asyncHandler(async(req,res)=>{
     res
     .status(200)
     .json(new ApiResponse(200, admin, {}))
-})
+});
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
     // Get refresh token from [cookies or body]
@@ -92,7 +92,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     } catch (error) {
         throw new ApiError(401, error?.message || "Invalid refresh token");
     }
-})
+});
 
 const registerUser = asyncHandler(async(req,res)=>{
     //yha pr aur bhi fields dena ha toh yaad rakhna. 
@@ -122,7 +122,7 @@ const registerUser = asyncHandler(async(req,res)=>{
   .status(201)
   .json(new ApiResponse(201, admin, "successfull registered"))
 
-})
+});
 
 const updateProfile = asyncHandler(async(req,res)=>{
     const{ email, contactNumber, age, address }=req.body
@@ -145,7 +145,7 @@ const updateProfile = asyncHandler(async(req,res)=>{
         age: admin.age,
         address: admin.address
     }, "Details Updated"));
-})
+});
 
 const loginUser = asyncHandler(async(req,res)=>{
     const { password, name, email } = req.body
@@ -185,7 +185,7 @@ const loginUser = asyncHandler(async(req,res)=>{
         },
          "Logged in Successfull"))
 
-})
+});
 
 const logout = asyncHandler(async(req,res)=>{
     Admin.findByIdAndDelete(
@@ -207,7 +207,7 @@ const logout = asyncHandler(async(req,res)=>{
     .clearCookie("accessToken",options)
     .clearCookie("refreshToken",options)
     .json(new ApiResponse(200,{},"Admin logged out"))
-})
+});
 
 const changeCurrentPassword = asyncHandler(async(req, res)=>{
   const { oldPassword, newPassword }= req.body
@@ -225,7 +225,7 @@ const changeCurrentPassword = asyncHandler(async(req, res)=>{
   .status(200)
   .json(new ApiResponse(200,{},"Password changed successfully"))
 
-})
+});
 
 const allDoctorsList = asyncHandler(async(req,res)=>{
    const admin = await Admin.findById(req.params.id)
@@ -241,7 +241,7 @@ const allDoctorsList = asyncHandler(async(req,res)=>{
     return res
         .status(200)
         .json(new ApiResponse(200, doctor, "Doctors List."))  
-})
+});
 
 const allStaffsList = asyncHandler(async(req,res)=>{
     const admin = await Admin.findById(req.params.id)
@@ -256,7 +256,7 @@ const allStaffsList = asyncHandler(async(req,res)=>{
     return res
         .status(200)
         .json(new ApiResponse(200, staff, "Staffs List."))  
-})
+});
 
 const allPatientsList = asyncHandler(async(req,res)=>{
     const admin = await Admin.findById(req.params.id)
@@ -271,7 +271,7 @@ const allPatientsList = asyncHandler(async(req,res)=>{
     return res
         .status(200)
         .json(new ApiResponse(200, patient, "Patients List."))  
-})
+});
 
 const alldocspec = asyncHandler(async(req,res)=>{
     const admin = await Admin.findById(req.params.id)
@@ -286,7 +286,7 @@ const alldocspec = asyncHandler(async(req,res)=>{
     }
     return res.status(200)
     .json(new ApiResponse(200, special ,"Records."))
-})
+});
 
 const deleteUser = asyncHandler(async(req,res)=>{
     const { emailId } = req.body
@@ -300,7 +300,7 @@ const deleteUser = asyncHandler(async(req,res)=>{
 
     return res.status(200)
     .json(new ApiResponse(200, {}, "Record deleted."))
-})
+});
 
 const Appointments = asyncHandler(async(req,res)=>{
     const { emailId } = req.body
@@ -334,7 +334,7 @@ const Appointments = asyncHandler(async(req,res)=>{
     });
         return res.status(200)
         .json(new ApiResponse(200, todayAppointments))
-})
+});
 
 const aboutPaitent = asyncHandler(async(req,res)=>{
     const { emailId } = req.body
@@ -346,7 +346,7 @@ const aboutPaitent = asyncHandler(async(req,res)=>{
         throw new ApiError(400, "Invalid Patient EmailId.")
     return res.status(200)
     .json(new ApiResponse(200, patient, "Patient Record."))
-})
+});
 
 const aboutStaff = asyncHandler(async(req,res)=>{
 const { emailId } = req.body
@@ -358,7 +358,7 @@ const { emailId } = req.body
         throw new ApiError(400, "Invalid Staff EmailId.")
     return res.status(200)
     .json(new ApiResponse(200, staff, "Staff Record."))
-})
+});
 
 const aboutDoctor = asyncHandler(async(req,res)=>{
 const { emailId } = req.body
@@ -370,7 +370,7 @@ const { emailId } = req.body
         throw new ApiError(400, "Invalid Doctor EmailId.")
     return res.status(200)
     .json(new ApiResponse(200, doctor, "Doctor Record."))
-})
+});
 
 const getPaymentsByMethod = asyncHandler(async (req, res) => {
     const { method ,date } = req.body;
@@ -401,24 +401,138 @@ const getPaymentsByMethod = asyncHandler(async (req, res) => {
     });
 
     if (payment.length === 0)
-        throw new ApiError(404, "No payment records found.");
+        throw new ApiError(404, "No payment record found with this method.");
 
     return res
         .status(200)
-        .json(new ApiResponse(200, payment, "Payment history"));
+        .json(new ApiResponse(200, payment, "Payment history found with this method"));
+});
+
+const getDailyRevenue = asyncHandler(async (req, res) => {
+    const { date, status } = req.body
+    const admin = await Admin.findById(req.params.id);
+    if (!admin) {
+    throw new ApiError(404, "Admin not found");}
+    if( !status || status.trim()===  "")
+        throw new ApiError(400, 'Status is required.')
+
+    const startDate = new Date(date)
+    startDate.setHours( 0, 0, 0, 0 )
+    const endDate = new Date(date)
+    endDate.setHours( 23, 59, 59, 999 )
+
+    if(!date)
+       throw new ApiError(400, "Date is required");
+    // const payment = await Payment.find({
+    //      date:{
+    //         $gte: startDate,
+    //         $lte: endDate
+    //      },
+    //      status
+    // });
+    // if (payment.length === 0)
+    //      throw new ApiError(400, "No payment found with this date.");
+    // const totalamount = payment.reduce((sum,amt)=>sum + (amt.amount||0),0)
+
+    // is sh better approach wala kaam
+
+    const totalamount = await Payment.aggregate([
+        {
+            $match:{
+                status: status,
+                date:{
+                    $gte:startDate,
+                    $lte:endDate
+                }
+            }
+        },
+            {
+                $group:{
+                _id: null, // "$date", "$status"
+                revenue: { $sum: "$amount" }
+               }
+            }
+        ]
+    );
+
+    const totalRevenue = totalamount[0]?. revenue|| 0
+    
+    return res
+    .status(200)
+    .json(new ApiResponse(200, totalRevenue, "Total Revenue of this date."))
+
+});
+
+const getHospitalRevenue = asyncHandler(async (req, res) => {
+    const { status } = req.body
+    const admin = await Admin.findById(req.params.id);
+    if (!admin) {
+    throw new ApiError(404, "Admin not found");}
+    if( !status || status.trim()===  "")
+        throw new ApiError(400, 'Status is required.')
+    const totalRevenue = await Payment.aggregate([
+        {
+            $match:{
+                status: status
+            }
+        },
+        {
+            $group:{
+                _id: null,
+                revenue: {$sum: "$amount"}
+            }
+        }
+    ])
+    const totalamount = totalRevenue[0]?.revenue || 0
+    return res
+    .status(200)
+    .json(new ApiResponse(200, totalamount, "Total Revenue of this date."))
+});
+
+const getMonthlyRevenue = asyncHandler(async (req, res) => {
+    const { date, status } = req.body;
+
+    const admin = await Admin.findById(req.params.id);
+    if (!admin) {
+        throw new ApiError(404, "Admin not found");
+    }
+
+    if (!status || status.trim() === "") {
+        throw new ApiError(400, 'Status is required.');
+    }
+
+    if (!date) {
+        throw new ApiError(400, "Date is required");
+    }
+
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    const totalRevenueAgg = await Payment.aggregate([
+        {
+            $match: {
+                status: status,
+                date: { $gte: startDate, $lte: endDate }
+            }
+        },
+        {
+            $group: {
+                _id: null, // ek hi total chahiye
+                revenue: { $sum: "$amount" }
+            }
+        }
+    ]);
+
+    const totalRevenue = totalRevenueAgg[0]?.revenue || 0;
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, totalRevenue, "Total Revenue of this date."));
 });
 
 export {
-    deleteUser,
-    aboutPaitent,
-    getPaymentsByMethod,
-    aboutStaff,
-    aboutDoctor,
-    Appointments,
-    alldocspec,
-    allDoctorsList,
-    allStaffsList,
-    allPatientsList,
     logout,
     loginUser,
     registerUser,
@@ -426,6 +540,23 @@ export {
     getProfile,
     refreshAccessToken,
     changeCurrentPassword,
-    generateAccessAndRefreshToken
-
+    generateAccessAndRefreshToken,
+    deleteUser,
+    
+    aboutPaitent,
+    aboutDoctor,
+    aboutStaff,
+    
+    Appointments,
+    alldocspec,
+    
+    allDoctorsList,
+    allStaffsList,
+    allPatientsList,
+    
+    getHospitalRevenue,
+    getPaymentsByMethod,
+    getDailyRevenue,
+    getMonthlyRevenue
+    
 }
